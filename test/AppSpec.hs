@@ -34,4 +34,6 @@ spec = describe "app" $ do
       responseBody r `shouldBe` "bar"
 
   it "returns a 404 for a missing key" $ do
-    pending
+    withApp $ \ baseUrl -> do
+      r <- request "GET" (baseUrl ++ "/get?key=foo")
+      responseStatus r `shouldBe` notFound404

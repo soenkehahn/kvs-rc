@@ -45,9 +45,11 @@ set storeRef (key, value) = liftIO $ do
 get :: MVar Store -> Maybe Text
   -> Handler ByteString
 get storeRef mKey = case mKey of
-  Just key -> liftIO $ modifyMVar storeRef $ \ store -> do
+  Just key -> do
+    store <- liftIO $ readMVar storeRef
     case Data.Map.lookup (cs key) store of
-      Just value -> return (store, value)
+      Just value -> return value
+      Nothing -> throwError $ err404
 
 -- * servant combinator for dynamic query params:
 
