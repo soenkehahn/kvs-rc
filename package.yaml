@@ -1,11 +1,24 @@
 name: key-value-server
 
 dependencies:
+  - base
+  - bytestring
+  - containers
   - servant-server
+  - string-conversions
+  - text
+  - wai
+  - warp
 
 ghc-options:
   - -Wall
   - -Wno-name-shadowing
+
+executables:
+  key-value-server:
+    main: key-value-server.hs
+    source-dirs:
+      - src
 
 tests:
   specs:
@@ -14,16 +27,6 @@ tests:
       - test
       - src
     dependencies:
-      - base
-      - bytestring
-      - containers
       - hspec
       - http-client
       - http-types
-      - lens
-      - servant
-      - string-conversions
-      - text
-      - wai
-      - warp
-      - wreq

@@ -10,7 +10,7 @@ module App where
 
 import Control.Concurrent
 import Control.Monad.IO.Class
-import Data.ByteString as SBS (ByteString)
+import Data.ByteString (ByteString)
 import Data.Map
 import Data.String.Conversions
 import Data.Text (Text)
