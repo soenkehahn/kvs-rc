@@ -24,3 +24,6 @@ tests:
       - wai
       - warp
       - wreq
+      - containers
+      - string-conversions
+      - text
