@@ -1,3 +1,4 @@
 :set -itest -isrc
 :set -fdiagnostics-color=never
 :set -Wall
+:set -Wno-name-shadowing

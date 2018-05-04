@@ -5,6 +5,7 @@ dependencies:
 
 ghc-options:
   - -Wall
+  - -Wno-name-shadowing
 
 tests:
   specs:

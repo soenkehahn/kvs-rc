@@ -42,14 +42,14 @@ set storeRef (key, value) = liftIO $ do
     return (insert key value store)
   return NoContent
 
-get :: MVar Store -> Maybe Text
-  -> Handler ByteString
+get :: MVar Store -> Maybe Text -> Handler ByteString
 get storeRef mKey = case mKey of
+  Nothing -> throwError err400
   Just key -> do
     store <- liftIO $ readMVar storeRef
     case Data.Map.lookup (cs key) store of
       Just value -> return value
-      Nothing -> throwError $ err404
+      Nothing -> throwError err404
 
 -- * servant combinator for dynamic query params:
 
@@ -76,6 +76,9 @@ instance forall subApi context . HasServer subApi context =>
     let parseRequest :: Request -> DelayedIO (ByteString, ByteString)
         parseRequest req = case queryString req of
           (key, Just value) : _ -> return (key, value)
+          _ -> delayedFailFatal err400{
+            errBody = cs "query parameter missing"
+          }
         delayed :: Delayed env (Server subApi)
         delayed =
           addParameterCheck subServer . withRequest $ \ req ->
