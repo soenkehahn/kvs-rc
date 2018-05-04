@@ -4,10 +4,10 @@ module AppSpec where
 
 import App
 import Data.ByteString.Lazy
-import qualified Data.ByteString as Sbs
 import Network.HTTP.Client
 import Network.HTTP.Types
 import Network.Wai.Handler.Warp
+import qualified Data.ByteString as Sbs
 import Test.Hspec
 
 withApp :: (String -> IO a) -> IO a

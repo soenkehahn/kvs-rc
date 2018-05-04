@@ -16,14 +16,14 @@ tests:
     dependencies:
       - base
       - bytestring
+      - containers
       - hspec
       - http-client
       - http-types
       - lens
       - servant
+      - string-conversions
+      - text
       - wai
       - warp
       - wreq
-      - containers
-      - string-conversions
-      - text
