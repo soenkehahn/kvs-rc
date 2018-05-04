@@ -1,0 +1,22 @@
+name: key-value-server
+
+dependencies:
+  - servant-server
+
+tests:
+  specs:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - base
+      - bytestring
+      - hspec
+      - http-client
+      - http-types
+      - lens
+      - servant
+      - wai
+      - warp
+      - wreq
