@@ -62,15 +62,16 @@ instance forall subApi context . HasServer subApi context =>
     (ByteString, ByteString) -> ServerT subApi m
 
   hoistServerWithContext Proxy contextProxy natTransformation subServer =
-    \ queryParams -> hoistServerWithContext
-      (Proxy :: Proxy subApi)
-      contextProxy
-      natTransformation
-      (subServer queryParams)
+    \ queryParams ->
+      hoistServerWithContext
+        (Proxy :: Proxy subApi)
+        contextProxy
+        natTransformation
+        (subServer queryParams)
 
   route :: forall env . Proxy (DynamicQueryParam :> subApi)
     -> Context context
-    -> Delayed env (Server (DynamicQueryParam :> subApi))
+    -> Delayed env ((ByteString, ByteString) -> Server subApi)
     -> Router env
   route Proxy context subServer =
     let parseRequest :: Request -> DelayedIO (ByteString, ByteString)
@@ -80,7 +81,5 @@ instance forall subApi context . HasServer subApi context =>
             errBody = cs "query parameter missing"
           }
         delayed :: Delayed env (Server subApi)
-        delayed =
-          addParameterCheck subServer . withRequest $ \ req ->
-            parseRequest req
+        delayed = addParameterCheck subServer $ withRequest parseRequest
     in route (Proxy :: Proxy subApi) context delayed
