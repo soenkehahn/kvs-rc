@@ -1,19 +1,81 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module App where
 
+import Control.Concurrent
+import Control.Monad.IO.Class
+import Data.ByteString as SBS (ByteString)
+import Data.Map
+import Data.String.Conversions
+import Data.Text (Text)
 import Network.Wai
 import Servant
+import Servant.Server.Internal.Router
+import Servant.Server.Internal.RoutingApplication
 
 type KeyValueApi =
-  "set" :> Get '[JSON] ()
+  "set" :> DynamicQueryParam :> Post '[PlainText] NoContent :<|>
+  "get" :> QueryParam "key" Text :> Get '[OctetStream] ByteString
 
 keyValueApi :: Proxy KeyValueApi
 keyValueApi = Proxy
 
-mkApp :: IO Application
-mkApp = return $ serve keyValueApi server
+type Store = Map ByteString ByteString
 
-server :: Handler ()
-server = return ()
+mkApp :: IO Application
+mkApp = do
+  storeRef <- newMVar empty
+  return $ serve keyValueApi (server storeRef)
+
+server :: MVar Store -> Server KeyValueApi
+server storeRef = set storeRef :<|> get storeRef
+
+set :: MVar Store -> (ByteString, ByteString) -> Handler NoContent
+set storeRef (key, value) = liftIO $ do
+  modifyMVar_ storeRef $ \ store -> do
+    return (insert key value store)
+  return NoContent
+
+get :: MVar Store -> Maybe Text
+  -> Handler ByteString
+get storeRef mKey = case mKey of
+  Just key -> liftIO $ modifyMVar storeRef $ \ store -> do
+    case Data.Map.lookup (cs key) store of
+      Just value -> return (store, value)
+
+-- * servant combinator for dynamic query params:
+
+data DynamicQueryParam
+
+instance forall subApi context . HasServer subApi context =>
+  HasServer (DynamicQueryParam :> subApi) context where
+
+  type ServerT (DynamicQueryParam :> subApi) m =
+    (ByteString, ByteString) -> ServerT subApi m
+
+  hoistServerWithContext Proxy contextProxy natTransformation subServer =
+    \ queryParams -> hoistServerWithContext
+      (Proxy :: Proxy subApi)
+      contextProxy
+      natTransformation
+      (subServer queryParams)
+
+  route :: forall env . Proxy (DynamicQueryParam :> subApi)
+    -> Context context
+    -> Delayed env (Server (DynamicQueryParam :> subApi))
+    -> Router env
+  route Proxy context subServer =
+    let parseRequest :: Request -> DelayedIO (ByteString, ByteString)
+        parseRequest req = case queryString req of
+          (key, Just value) : _ -> return (key, value)
+        delayed :: Delayed env (Server subApi)
+        delayed =
+          addParameterCheck subServer . withRequest $ \ req ->
+            parseRequest req
+    in route (Proxy :: Proxy subApi) context delayed

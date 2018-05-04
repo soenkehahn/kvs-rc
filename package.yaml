@@ -3,6 +3,9 @@ name: key-value-server
 dependencies:
   - servant-server
 
+ghc-options:
+  - -Wall
+
 tests:
   specs:
     main: Spec.hs

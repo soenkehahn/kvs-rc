@@ -1,2 +1,3 @@
 :set -itest -isrc
 :set -fdiagnostics-color=never
+:set -Wall
